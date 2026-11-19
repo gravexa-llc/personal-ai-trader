@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "owner_name": "Sam",
+  "phase": "DRY_RUN",
+  "account": { "number": "ACCT-TEST-0001", "nickname": "Trading", "start_balance": 5000 },
+  "timezone": "America/Los_Angeles",
+  "limits": {
+    "option_cap_dollars": 1000,
+    "share_cap_dollars": 1500,
+    "cash_floor_pct": 30,
+    "max_open_positions": 5,
+    "max_same_theme": 2,
+    "daily_loss_stop_pct": 8,
+    "halt_account_value": 3500,
+    "loss_streak_pause": 3
+  },
+  "options": {
+    "expiry_days_min": 21,
+    "expiry_days_max": 60,
+    "min_open_interest": 500,
+    "max_spread_pct_of_mid": 10,
+    "default_stop_pct": 50,
+    "ratchet": { "trigger_gain_pct": 50, "lock_gain_pct": 25, "trail_pct": 25 },
+    "overnight_cushion": 0.90,
+    "stop_market_after_gain": { "enabled": true, "max_spread_pct": 5, "raise_max_spread_pct": 6, "not_before": "06:45" }
+  },
+  "allowed": { "long_options": true, "shares": true },
+  "watchlist": { "name": "Trader", "id": null },
+  "notifications": { "push": true },
+  "go_live": { "paper_days_required": 5, "extensions": 0, "met": false, "approved_at": null },
+  "schedule": { "sunday_review_local": "15:03" },
+  "rules_set_on": null
+}

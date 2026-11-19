@@ -1,0 +1,20 @@
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --quiet pytest openpyxl
+      - name: Nothing personal or secret in the tree
+        run: python scripts/scan_public.py
+      - name: Tests (the order guard among them)
+        run: python -m pytest -q

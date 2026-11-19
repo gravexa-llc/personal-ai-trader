@@ -1,0 +1,56 @@
+# State — read this first on every start
+
+Last updated: <YYYY-MM-DD HH:MM local, from `date`> (<which run>). <One or two lines: phase, open positions and their resting exits, anything waiting for the owner, what the next run must do.>
+
+## If this session was just cleared, restarted or resumed — do these first
+1. **Read** this file, then `trading/trader.json`, `trading/RULES.md`, `trading/PLAN.md`, `trading/STRATEGY.md` and today's `trading/journal/YYYY-MM-DD.md` (its last entry says what the next check must look at). Run `python3 "<plugin root>/tools/trader_config.py" --check`; if it fails, fix trader.json first (the guard refuses every account call meanwhile).
+2. **Reconcile:** `trading/.venv/bin/python "<plugin root>/tools/ledger.py" show open` must match "Open positions" below. In LIVE or HALTED also compare with Robinhood — `get_equity_positions`, `get_option_positions`, `get_equity_orders`, `get_option_orders`, `get_advanced_orders`, `get_trade_approvals` — and check that every position has its resting exit (or one waiting for approval, listed under "Approvals"), before any trading decision.
+3. **Schedules:** run `CronList`, then `python3 "<plugin root>/tools/schedule.py" --day <today>`, `--next-trading-day --after <today>` and `--sunday-review --after <today>`. Every run still ahead today, the next trading day's runs and the coming Sunday's review must exist. Re-create **only the missing ones** with `CronCreate`, `recurring: false`, each entry's `cron` and `prompt` verbatim, and update "Active schedules" below. A resumed session usually keeps its tasks; a fresh one starts with none, so this step rebuilds everything.
+4. **Watcher:** if it is a trading day in market hours and positions are open, start the price watcher again with exactly the levels under "Price watcher" (command in the check skill, section 6a; starting it replaces this workspace's earlier watcher — never stop a watcher by process name). Restart it even if one is running — a watcher started by an earlier session cannot wake this one.
+5. **Prove the guard** with the preview proof in `docs/SAFETY.md` ("Proving the hook is live"), at least case 1: a `review_option_order` with two legs (buy/open and sell/open on two option ids of the same underlying from `get_option_instruments`) must come back `order_guard: BLOCKED — option orders must have exactly one leg`. Previews place nothing. If it returns a preview, the hook is not running: treat the session as DRY_RUN, push the owner, and do not trade until it is fixed.
+6. **Run the routine for the time of day:** before the open `personal-ai-trader:trader-check prep`; in market hours `personal-ai-trader:trader-check hourly` (or `preclose` if the pre-close run is due or past); after the close, the wrap if today's has not run; on a Sunday, the review if this week's has not run.
+
+## Phase
+- Phase: **<DRY_RUN | LIVE | HALTED>** since <date> (from trader.json `phase`).
+- DRY_RUN: paper trading days completed **<n> of <go_live.paper_days_required>** (a wrap entry in the journal while in DRY_RUN); extensions <go_live.extensions>. Go-live question: <not yet due | asked at the YYYY-MM-DD review, waiting | answered: …>.
+- HALTED: why and when; leaving it is the owner's decision (`/trader-setup`).
+
+## Approvals
+- Robinhood approval switch: **<on | off>** (read <YYYY-MM-DD HH:MM> with `get_trade_approval_setting`). <Changes noted in the journal.>
+- Pending approvals — **a stop listed here means that position has no resting exit yet**:
+
+| Approval id | Sent | Order | For | Pushed to the owner |
+|---|---|---|---|---|
+| <id> | <HH:MM> | <e.g. stop-limit sell-to-close 1 XYZ … stop / limit> | <entry / protective stop / exit, trade id> | <times> |
+
+## Account snapshot
+- **Close <YYYY-MM-DD>:** <value> at the closing bids (cash <…>; each position bid / ask). Robinhood's own total <…>. Day <+/−…> from <previous close>; drawdown from the start balance <…>. The next day's change is measured from this value.
+- <Earlier closes, newest first; trim to the last two weeks.>
+
+## Open positions
+- **<trade id> <SYM> <expiry> <strike> <call/put> ×<n>** (option_id <…>) — opened <date time> at <price> (cost <…>, fees <…>; order <id>). Setup <named setup>.
+  - Resting exit: <order id, type, stop / limit, GTC or day> — or **waiting for approval <id>**.
+  - Stop: <planned stop on the bid>. Thesis stop: <…>. Target / ratchet trigger: <…>. Best bid since entry: <…>. Time exit: <date>.
+  - Alerts: <underlying level (alert id)> ….
+  - Shadow levels: <e.g. −25% stop level> (see `trading/shadow/`).
+- Pending entries (sent, not filled or not approved): <…>.
+- Record: <n> closed, realized <…>; loss streak <n>.
+
+## Active schedules
+Created at <which run> (CronList before: <…>). No recurring tasks.
+
+| Id | Day and time | Cron | Run |
+|---|---|---|---|
+| <id> | <Mon MM-DD HH:MM> | `<cron>` | <prep / check / hourly / preclose / closing mark / wrap / Sunday review> |
+
+## Active 15-minute watches
+<None, or: reason, started at, ends when.>
+
+## Price watcher
+- <Running since HH:MM (pid) | stopped at the close | not needed (no positions)>. Levels to start with, exactly: `"<SYM> above <x>" "<SYM> below <y>"` (<which position and level each is>).
+
+## Waiting on the owner
+1. <Each open question or approval, with the date asked and where it is written (review file, journal).>
+
+## Next
+- <What the next run must look at: events, earnings, levels, approvals to chase, shadow rows due.>

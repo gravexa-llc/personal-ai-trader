@@ -1,0 +1,16 @@
+{
+  "name": "personal-ai-trader",
+  "displayName": "Personal AI Trader",
+  "version": "0.1.0",
+  "description": "A rule-bound options and share trader for your own Robinhood account: scheduled checks, hard limits enforced by an order guard hook, a ledger and a journal. Starts in DRY_RUN (paper).",
+  "author": {
+    "name": "Gravexa"
+  },
+  "keywords": [
+    "trading",
+    "robinhood",
+    "options",
+    "safety"
+  ],
+  "license": "MIT"
+}

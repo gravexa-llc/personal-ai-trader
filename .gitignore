@@ -1,0 +1,19 @@
+.venv/
+.venv-dev/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+*.bak-*
+
+# Never published: local test logs, the maintainer's private term list, any workspace data
+tests/RESULTS-*.md
+*.local.txt
+trading/
+.claude/
+.claude-config/
+trader.json
+*.csv
+*.xlsx
+.env
+.env.*

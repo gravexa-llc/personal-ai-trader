@@ -1,0 +1,75 @@
+# Trading rules — {{nickname}} account
+
+Hard limits for this trader. Only {{owner}} changes them.
+**This file is generated** from `trading/trader.json` by the plugin's `tools/render_rules.py`; do not edit it by hand. To change a limit, change `trader.json` (through `/trader-setup --limits`, or by hand) and regenerate. `render_rules.py --check` (and `/trader-doctor`) reports any difference between this file and the config.
+Every number here is the one the order guard and the routines read. Rules marked *(product rule)* are part of Personal AI Trader itself and are the same for every user.
+
+Limits {{set_by}}.{{date_hint}} Current phase: **{{phase}}**.
+
+## 1. Account — {{set_by}}
+- Trade only the Robinhood account nicknamed "{{nickname}}" (number ending {{account_last4}}). Every other account is off limits; the order guard refuses any other account number.
+- Starting balance: **{{start_balance}}**.
+- Long options need option level 2 or higher on the account. A higher level does not widen what is allowed (section 4).
+- No margin borrowing: the total cost of open positions never exceeds the cash in the account. Using unsettled sale proceeds for a new trade is allowed (that is not borrowing). *(product rule)*
+
+## 2. Phase and go-live gate — {{set_by}}
+- **DRY_RUN** (paper): the guard refuses every order placement and cancel; previews and reads are allowed. Trades are recorded in the ledger as paper trades (bought at the ask, sold at the bid).
+- **LIVE**: real orders within these rules.
+- **HALTED**: the guard refuses new opening orders; closing orders, cancels and reads are allowed.
+- No live order before the go-live gate is met: {{paper_days}} trading days of paper practice and one Sunday review ({{extensions}} extra paper week(s) taken so far), the order guard proven live, these rules set by {{owner}}, the account funded as stated, and Robinhood's approval switch read. Then {{owner}} gives an explicit "go". Gate status: {{gate_status}}.
+
+## 3. Authority — {{set_by}}
+- The trader opens and closes trades on its own when they fit these rules, and reports each one (section 11).
+- Robinhood's "approve each order" switch lives in the Robinhood app; only {{owner}} changes it. While it is on, every order waits for {{owner}}'s approval, including a protective stop after an entry fills.
+- One Robinhood watchlist, named "{{watchlist_name}}", holds the names being watched. No other watchlist and no saved scanner is created or changed.
+- Price alerts may be set and removed on the underlyings of open positions. Alerts notify {{owner}}; they place no trades.
+- Never used: crypto previews, orders or cancels; the crypto sign-up link; option exercise or its cancel; any Robinhood tool not on the order guard's allow-list. *(product rule)*
+- Anything outside these rules needs {{owner}}'s explicit yes first.
+
+## 4. Allowed instruments — {{set_by}}
+{{instruments}}
+- Never: spreads or any other multi-leg trade, selling any option to open, short selling, crypto, option exercise. Every strategy that adds a sold option can be assigned, which can lose more than the money put into the trade; a bought call or put cannot lose more than its premium if it is closed before expiry. *(product rule)*
+- Expiry at entry: **{{expiry_min}} to {{expiry_max}} days** out. Never hold an option into its expiry day; close it at least 10 days before expiry regardless. Never exercise; close in the market instead. *(10-day rule: product rule)*
+- Swing trades held days to a few weeks; same-day exits are allowed when a stop or target hits.
+
+## 5. Size and exposure — {{set_by}}
+- Max cost per option trade: **{{option_cap}}** ({{option_cap_pct}} of the {{start_balance}} start). For a bought option the risk is the full premium paid. With the default {{default_stop}} stop the planned loss is up to {{planned_option_loss}} a trade.
+- Max cost per share position: **{{share_cap}}**, with a stop that keeps the planned loss well under the option cap.
+- The caps are fixed in dollars, whatever the account value.
+- Keep at least **{{cash_floor}}** of account value in cash at all times.
+- At most **{{max_positions}}** positions open at once, and at most **{{max_same_theme}}** that depend on the same thing (same stock, same sector, or the same direction on the broad market).
+- The day's closing account value marks options at the last regular-session bid before the close (the closing mark), not the mid. Robinhood's own total is noted beside it.
+
+## 6. Loss limits — {{set_by}}
+- **Halt:** if account value is **{{halt_value}}** or less ({{halt_drop}} from the start), open no new trades, keep managing or closing what is open, notify {{owner}} and wait for their decision.
+- **Daily guard:** if the account is down **{{daily_loss}}** or more on the day, no new entries that day.
+- **Losing streak:** after **{{loss_streak}}** losing trades in a row, pause new entries and write a short mid-week review that evening for {{owner}}; entries may resume the next trading day unless {{owner}} says otherwise. Selling part of a position at its target counts as a closed winning trade for this count.
+
+## 7. Trade quality — {{set_by}}
+- Before any order is sent, the ledger holds a written thesis, the named setup from STRATEGY.md, a planned stop, target and time exit.
+- Liquid contracts only: open interest of **{{min_oi}}** or more and a bid-ask spread no wider than **{{max_spread}}** of the mid price.
+- Entries are limit orders only, previewed first (`review_option_order` / `review_equity_order`). An unfilled entry may be re-priced once toward the ask within the plan, or dropped.
+- Levels are judged on the **bid**, not the mark.
+- Do not hold a bought option through that company's earnings unless the trade is an explicit earnings thesis; an earnings trade uses the same option cap.
+
+## 8. Exits — {{set_by}}
+- Default plan: stop at **−{{default_stop}}** of the premium (on the bid), time exit as planned, and out at least 10 days before expiry.
+- Protective exit on options: once a bought option fills, rest a stop-limit sell (GTC) at the planned stop with the limit 10–15% below the stop price. Never a market order on options. *(limit offset: product rule)*
+- A resting stop-limit triggers on trades, not on the bid: every check compares the bid with the stop and closes by hand (cancel the resting stop first) if the bid is through it. If a stop-limit is jumped without filling, the next check exits with a limit order.
+- A stop and a profit-target order cannot rest together on one option position (the stop commits every contract). To take a target: cancel the resting stop, confirm it is cancelled, sell with a limit order, then rest a new stop-limit for any contracts left.
+- A stop gapped through at the open without filling: reassess, and wait for a reversal at most 30 minutes after the open, then exit regardless. *(product rule)*
+- Protective exit on shares: one combined (OCO) order holding the profit target and a stop; when one fills the other is cancelled.
+{{stop_market_rule}}
+
+## 9. Take-profit ratchet — {{set_by}}
+- There is no fixed sale at a profit target for options. When the bid first reaches **+{{ratchet_trigger}}** of entry, raise the stop to lock in **+{{ratchet_lock}}**; from then on the stop trails **{{ratchet_trail}}** below the best bid since entry, raised at every check and never lowered.
+- The position closes when the bid falls to the stop (resting order or by hand), or by the time exit, the thesis stop, or the 10-days-before-expiry rule.
+
+## 10. Overnight cushion — {{set_by}}
+{{cushion_rule}}
+
+## 11. Reporting — {{set_by}}
+{{reporting_push}}
+- A short wrap at the end of every trading day; hourly checks that take no action stay silent.
+- A weekly review and re-plan every Sunday (STRATEGY.md is rewritten then), and a mid-week review after a loss limit trips.
+{{owner_notes}}

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TEMPLATE for an optional LaunchAgent (macOS only; never installed by the plugin). See docs/KEEP-RUNNING.md.
+     Replace every placeholder in angle brackets inside the string values below, save it as
+     ~/Library/LaunchAgents/<your label>.plist, check it with `plutil -lint`, then load it with launchctl. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string><your label, e.g. com.yourname.personal-ai-trader-supervisor></string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string><absolute path to your filled-in trader-supervisor.sh></string>
+  </array>
+  <!-- Every 3 minutes, and once when you log in. -->
+  <key>StartInterval</key>
+  <integer>180</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string><absolute path to a log file, e.g. /tmp/personal-ai-trader-supervisor.out></string>
+  <key>StandardErrorPath</key>
+  <string><absolute path to a log file, e.g. /tmp/personal-ai-trader-supervisor.out></string>
+</dict>
+</plist>

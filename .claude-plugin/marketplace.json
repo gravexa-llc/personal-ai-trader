@@ -1,0 +1,15 @@
+{
+  "name": "personal-ai-trader",
+  "description": "Personal AI Trader: a rule-bound options and share trader for your own Robinhood account, with an order guard hook. Starts in DRY_RUN (paper).",
+  "owner": {
+    "name": "Gravexa"
+  },
+  "plugins": [
+    {
+      "name": "personal-ai-trader",
+      "source": "./",
+      "description": "A rule-bound options and share trader for your own Robinhood account: scheduled checks, hard limits enforced by an order guard hook, a ledger and a journal. Starts in DRY_RUN (paper).",
+      "category": "finance"
+    }
+  ]
+}
